@@ -1,0 +1,15 @@
+{
+  "rig": "experimental-app",
+  "runtime": {
+    "provider": "claude",
+    "command": "claude",
+    "args": ["--dangerously-skip-permissions"],
+    "prompt_mode": "hook"
+  },
+  "scheduler": {
+    "max_polecats": -1
+  },
+  "beads": {
+    "prefix": "ea"
+  }
+}

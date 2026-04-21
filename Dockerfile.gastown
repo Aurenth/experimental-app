@@ -1,0 +1,42 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/usr/local/go/bin:/root/go/bin:$PATH"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    wget \
+    tmux \
+    sqlite3 \
+    zsh \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go 1.24
+RUN wget -q https://go.dev/dl/go1.24.2.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go1.24.2.linux-amd64.tar.gz \
+    && rm go1.24.2.linux-amd64.tar.gz
+
+# Install Dolt
+RUN curl -L https://github.com/dolthub/dolt/releases/latest/download/install.sh | bash
+
+# Install Gas Town and Beads
+RUN go install github.com/steveyegge/gastown/cmd/gt@latest \
+    && go install github.com/steveyegge/beads/cmd/bd@latest \
+    && go install github.com/steveyegge/beads/cmd/bv@latest
+
+# Install Claude Code CLI
+RUN curl -fsSL https://claude.ai/install.sh | sh || true
+
+# Configure git
+ARG GIT_USER=""
+ARG GIT_EMAIL=""
+RUN git config --global user.name "${GIT_USER}" \
+    && git config --global user.email "${GIT_EMAIL}" \
+    && git config --global init.defaultBranch main
+
+WORKDIR /workspace
+
+CMD ["zsh"]

@@ -1,0 +1,18 @@
+services:
+  gastown:
+    build:
+      context: .
+      dockerfile: Dockerfile.gastown
+    environment:
+      - GIT_USER=${GIT_USER:-}
+      - GIT_EMAIL=${GIT_EMAIL:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GT_WORKSPACE=/workspace/gt
+    volumes:
+      - ${FOLDER:-./workspace}:/workspace
+      - /tmp/gastown-tmux:/tmp
+    working_dir: /workspace/gt
+    stdin_open: true
+    tty: true
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8080"
