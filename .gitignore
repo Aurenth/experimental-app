@@ -25,3 +25,21 @@ Thumbs.db
 dist/
 bin/
 *.exe
+
+# Node
+node_modules/
+*.tsbuildinfo
+npm-debug.log*
+
+# Flutter
+apps/mobile/.dart_tool/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/build/
+apps/mobile/.packages
+
+# Coverage
+coverage/
+
+# Runtime
+.runtime/
