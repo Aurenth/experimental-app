@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import {
   HealthCheck,
+  HealthCheckError,
   HealthCheckService,
   HealthIndicatorResult,
 } from '@nestjs/terminus';
@@ -24,8 +25,11 @@ export class HealthController {
         try {
           await this.prisma.$queryRaw`SELECT 1`;
           return { database: { status: 'up' } };
-        } catch {
-          return { database: { status: 'down' } };
+        } catch (e) {
+          throw new HealthCheckError(
+            'database',
+            { database: { status: 'down' } },
+          );
         }
       },
     ]);

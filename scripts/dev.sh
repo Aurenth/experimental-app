@@ -24,7 +24,7 @@ sleep 5
 # Run migrations
 echo "Running Prisma migrations..."
 cd apps/api
-npx prisma migrate dev --name init 2>/dev/null || npx prisma migrate deploy
+npx prisma migrate dev
 
 # Start API in dev mode
 echo ""

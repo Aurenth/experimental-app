@@ -1,7 +1,7 @@
 .PHONY: dev dev-services dev-api stop clean migrate seed logs help
 
 # Start all services (Postgres, Redis, MinIO) + API in dev mode
-dev: dev-services
+dev: install dev-services
 	@echo "Starting NestJS API in dev mode..."
 	@cd apps/api && npm run start:dev
 
