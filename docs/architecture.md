@@ -5,8 +5,8 @@
 ```
 experimental-app/
 ├── apps/
-│   ├── mobile/          # Flutter app (Riverpod, GoRouter, RevenueCat)
-│   └── api/             # NestJS backend (Prisma, PostgreSQL, Redis)
+│   ├── mobile/          # Flutter 3.x mobile app (Riverpod, GoRouter, RevenueCat)
+│   └── api/             # NestJS 10 backend (Prisma, PostgreSQL, Redis)
 ├── packages/
 │   └── shared-types/    # Shared TypeScript types (optional)
 ├── infra/
@@ -24,7 +24,118 @@ experimental-app/
 └── README.md
 ```
 
-## Backend Stack (apps/api)
+---
+
+## Flutter App — `apps/mobile`
+
+### Technology Choices
+
+| Concern | Library | Version | Rationale |
+|---------|---------|---------|-----------|
+| State management | Riverpod | ^2.5 | Code-gen, compile-time safety, no BuildContext dependency |
+| Navigation | GoRouter | ^14 | Typed routes, deep linking, web support |
+| Networking | Dio | ^5.4 | Interceptors for JWT refresh, cancellation tokens |
+| Crash reporting | Sentry | ^8 | Source maps, performance tracing, release health |
+| In-app purchases | RevenueCat | ^7 | Cross-platform, one-time purchases + consumables |
+| Analytics | PostHog | ^4 | Privacy-first, self-hostable, feature flags |
+| Local storage | Hive | ^2.2 | Offline-first key-value + typed boxes |
+| Serialisation | Freezed + json_serializable | ^2.5 / ^6.8 | Immutable models, union types |
+
+### Folder Structure
+
+```
+lib/
+├── main.dart              # Default entry (→ prod)
+├── main_dev.dart          # Dev flavour entry
+├── main_staging.dart      # Staging flavour entry
+├── main_prod.dart         # Prod flavour entry
+│
+├── app/
+│   ├── app.dart           # Root MaterialApp.router
+│   └── router.dart        # GoRouter with typed routes + auth redirect guard
+│
+├── core/
+│   ├── config/
+│   │   └── app_config.dart      # Immutable per-flavour config (API URL, DSNs, keys)
+│   ├── di/
+│   │   └── providers.dart       # Root Riverpod providers
+│   ├── network/
+│   │   ├── dio_client.dart      # Configured Dio instance
+│   │   └── auth_interceptor.dart # JWT attach + transparent refresh on 401
+│   ├── storage/
+│   │   └── hive_service.dart    # Hive init + typed box accessors
+│   └── utils/
+│       └── bootstrap.dart       # Shared startup: Hive, Sentry, RevenueCat, PostHog
+│
+├── features/
+│   └── <feature>/
+│       ├── data/          # Repository impl, remote/local sources, DTOs
+│       ├── domain/        # Entities, repository interfaces, use cases
+│       └── presentation/  # Screens, notifiers (Riverpod), widgets
+│
+└── shared/
+    ├── theme/
+    │   └── app_theme.dart  # Material 3 light/dark themes
+    └── widgets/            # Reusable UI components
+```
+
+### Flavours
+
+Three flavours are configured, each with its own:
+- API base URL
+- Sentry DSN
+- RevenueCat API key
+- PostHog project key
+
+| Flavour | Android build variant | iOS xcconfig | Main entry |
+|---------|-----------------------|--------------|------------|
+| dev | `devDebug` | `dev.xcconfig` | `main_dev.dart` |
+| staging | `stagingDebug` / `stagingRelease` | `staging.xcconfig` | `main_staging.dart` |
+| prod | `prodRelease` | `prod.xcconfig` | `main_prod.dart` |
+
+**Run commands:**
+```bash
+# Dev
+flutter run --flavor dev -t lib/main_dev.dart
+
+# Staging
+flutter run --flavor staging -t lib/main_staging.dart
+
+# Prod build
+flutter build apk --flavor prod -t lib/main_prod.dart
+flutter build ipa --flavor prod -t lib/main_prod.dart
+```
+
+### Network Layer
+
+`DioClient` wraps Dio with:
+- Per-environment `baseUrl` from `AppConfig`
+- `AuthInterceptor` that attaches `Authorization: Bearer <access_token>` and
+  transparently refreshes on 401 (single-flight — no concurrent refresh)
+- `PrettyDioLogger` in debug mode only
+
+### State Management Patterns
+
+All providers are generated via `riverpod_generator`. Run:
+```bash
+dart run build_runner watch --delete-conflicting-outputs
+```
+
+Feature state uses `@riverpod` annotated `AsyncNotifier` or `Notifier` subclasses.
+Global ephemeral state (e.g. auth token) uses `StateProvider`.
+
+### Auth Flow
+
+1. App starts → `AppRouter` checks `authTokenProvider`
+2. Token absent → redirect to `/login`
+3. User signs in → `AuthNotifier.signIn` sets token in `authTokenProvider`
+4. Token persisted to `HiveService.authBox` (encrypted via `flutter_secure_storage` key)
+5. API calls → `AuthInterceptor` attaches token
+6. 401 → interceptor calls `AuthNotifier.refreshToken`; on failure → `signOut`
+
+---
+
+## Backend Stack — `apps/api`
 
 | Layer | Technology |
 |-------|-----------|
@@ -42,21 +153,6 @@ experimental-app/
 | Payments | Razorpay (one-time charges + orders) |
 | Push | Firebase Admin SDK + FCM |
 | Security | Helmet, CORS, rate limiting |
-
-## Frontend Stack (apps/mobile)
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Flutter 3.x |
-| Language | Dart 3.x (null-safe) |
-| State Management | Riverpod |
-| Navigation | GoRouter |
-| Local DB | Hive / Drift (offline-first) |
-| Purchases | RevenueCat |
-| Push | Firebase Cloud Messaging |
-| Analytics | PostHog |
-| Crash Reporting | Sentry |
-| HTTP | Dio |
 
 ## Infrastructure (local dev)
 

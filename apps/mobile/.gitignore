@@ -1,0 +1,57 @@
+# Dart/Flutter
+.dart_tool/
+.packages
+pubspec.lock
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# Flutter generated
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+*.gr.dart
+
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Build artifacts
+build/
+.dart_tool/
+
+# Android
+android/.gradle
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/key.properties
+**/android/**/GeneratedPluginRegistrant.java
+
+# iOS
+ios/.generated/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Runner/GeneratedPluginRegistrant.h
+ios/Runner/GeneratedPluginRegistrant.m
+ios/.symlinks/
+
+# Exceptions
+!ios/Flutter/dev.xcconfig
+!ios/Flutter/staging.xcconfig
+!ios/Flutter/prod.xcconfig
