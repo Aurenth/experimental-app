@@ -13,6 +13,9 @@ class AuthState with _$AuthState {
       _Authenticated;
   const factory AuthState.unauthenticated() = _Unauthenticated;
   const factory AuthState.loading() = _Loading;
+  const factory AuthState.otpSent({required String phone}) = _OtpSent;
+  const factory AuthState.passwordResetSent({required String email}) =
+      _PasswordResetSent;
   const factory AuthState.error(String message) = _Error;
 }
 
@@ -34,6 +37,53 @@ class AuthNotifier extends _$AuthNotifier {
     }
   }
 
+  Future<void> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    state = const AuthState.loading();
+    try {
+      // TODO(dev): Call auth repository
+      throw UnimplementedError();
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> sendPhoneOtp({required String phone}) async {
+    state = const AuthState.loading();
+    try {
+      // TODO(dev): Call auth repository to send OTP
+      throw UnimplementedError();
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> verifyOtp({
+    required String phone,
+    required String otp,
+  }) async {
+    state = const AuthState.loading();
+    try {
+      // TODO(dev): Call auth repository to verify OTP
+      throw UnimplementedError();
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> forgotPassword({required String email}) async {
+    state = const AuthState.loading();
+    try {
+      // TODO(dev): Call auth repository to send reset email
+      throw UnimplementedError();
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
   Future<AuthToken> refreshToken() async {
     // TODO(dev): Call auth repository to refresh the token
     throw UnimplementedError();
@@ -42,5 +92,11 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> signOut() async {
     ref.read(authTokenProvider.notifier).state = null;
     state = const AuthState.unauthenticated();
+  }
+
+  void clearError() {
+    if (state is _Error) {
+      state = const AuthState.unauthenticated();
+    }
   }
 }

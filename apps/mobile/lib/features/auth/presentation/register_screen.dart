@@ -5,14 +5,18 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/design_system/design_system.dart';
 import 'auth_notifier.dart';
 
-class LoginScreen extends ConsumerWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends ConsumerWidget {
+  const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Account'),
+        leading: BackButton(onPressed: () => context.go('/login')),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.xl2),
@@ -23,7 +27,7 @@ class LoginScreen extends ConsumerWidget {
                 child: CircularProgressIndicator(),
               ),
             ),
-            orElse: () => _LoginForm(
+            orElse: () => _RegisterForm(
               errorMessage: authState.maybeWhen(
                 error: (msg) => msg,
                 orElse: () => null,
@@ -36,31 +40,37 @@ class LoginScreen extends ConsumerWidget {
   }
 }
 
-class _LoginForm extends ConsumerStatefulWidget {
-  const _LoginForm({this.errorMessage});
+class _RegisterForm extends ConsumerStatefulWidget {
+  const _RegisterForm({this.errorMessage});
 
   final String? errorMessage;
 
   @override
-  ConsumerState<_LoginForm> createState() => _LoginFormState();
+  ConsumerState<_RegisterForm> createState() => _RegisterFormState();
 }
 
-class _LoginFormState extends ConsumerState<_LoginForm> {
+class _RegisterFormState extends ConsumerState<_RegisterForm> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
-  void _signIn() {
+  void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(authNotifierProvider.notifier).signIn(
+    ref.read(authNotifierProvider.notifier).register(
+          name: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -76,31 +86,29 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: AppSpacing.xl4),
-          Center(
-            child: Text(
-              'ॐ',
-              style: TextStyle(
-                fontSize: 48,
-                color: scheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl2),
+          const SizedBox(height: AppSpacing.lg),
           Text(
-            'Welcome back',
-            style: textTheme.headlineMedium?.copyWith(color: scheme.secondary),
-            textAlign: TextAlign.center,
+            'Welcome to Muhurtam',
+            style: textTheme.headlineSmall?.copyWith(color: scheme.secondary),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Sign in to your Muhurtam account',
+            'Create your account to get started.',
             style: textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl3),
+          AppTextField(
+            controller: _nameController,
+            label: 'Full Name',
+            hint: 'Arjun Sharma',
+            prefixIcon: const Icon(Icons.person_outline),
+            textInputAction: TextInputAction.next,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+          ),
+          const SizedBox(height: AppSpacing.lg),
           AppTextField(
             controller: _emailController,
             label: 'Email',
@@ -122,31 +130,42 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
               icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
+                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
               ),
               onPressed: () =>
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _signIn(),
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'Password is required' : null,
+            textInputAction: TextInputAction.next,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Password is required';
+              if (v.length < 8) return 'Password must be at least 8 characters';
+              return null;
+            },
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => context.go('/forgot-password'),
-              child: Text(
-                'Forgot Password?',
-                style: textTheme.bodySmall?.copyWith(color: scheme.primary),
+          const SizedBox(height: AppSpacing.lg),
+          AppTextField(
+            controller: _confirmController,
+            label: 'Confirm Password',
+            obscureText: _obscureConfirm,
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined,
               ),
+              onPressed: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
             ),
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _submit(),
+            validator: (v) {
+              if (v != _passwordController.text) {
+                return 'Passwords do not match';
+              }
+              return null;
+            },
           ),
           if (widget.errorMessage != null) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.lg),
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
@@ -163,18 +182,8 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
           ],
           const SizedBox(height: AppSpacing.xl2),
           AppButton.filled(
-            label: 'Sign In',
-            onPressed: _signIn,
-            width: double.infinity,
-            size: AppButtonSize.large,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          _OrDivider(),
-          const SizedBox(height: AppSpacing.lg),
-          AppButton.outlined(
-            label: 'Continue with Phone',
-            onPressed: () => context.go('/phone-otp'),
-            icon: const Icon(Icons.phone_outlined),
+            label: 'Create Account',
+            onPressed: _submit,
             width: double.infinity,
             size: AppButtonSize.large,
           ),
@@ -183,15 +192,15 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "Don't have an account? ",
+                'Already have an account? ',
                 style: textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
               ),
               GestureDetector(
-                onTap: () => context.go('/register'),
+                onTap: () => context.go('/login'),
                 child: Text(
-                  'Register',
+                  'Sign In',
                   style: textTheme.bodyMedium?.copyWith(
                     color: scheme.primary,
                     fontWeight: FontWeight.w600,
@@ -203,30 +212,6 @@ class _LoginFormState extends ConsumerState<_LoginForm> {
           const SizedBox(height: AppSpacing.xl2),
         ],
       ),
-    );
-  }
-}
-
-class _OrDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Row(
-      children: [
-        Expanded(child: Divider(color: scheme.outlineVariant)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(
-            'or',
-            style: textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        Expanded(child: Divider(color: scheme.outlineVariant)),
-      ],
     );
   }
 }
