@@ -16,7 +16,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
+  refreshTokens    RefreshToken[]
+  entitlements     UserEntitlement[]
 
   @@map("users")
 }
@@ -32,4 +33,67 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model Ritual {
+  id              String       @id @default(cuid())
+  slug            String       @unique
+  name            String
+  nameHi          String?
+  description     String?
+  category        String       // festival | lifecycle | monthly | seasonal
+  tradition       String       // north | south | east | west | jain | sikh | buddhist
+  language        String       @default("hi")
+  isFree          Boolean      @default(true)
+  durationMinutes Int?
+  imageUrl        String?
+  steps           RitualStep[]
+  samagri         Samagri[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([category])
+  @@index([tradition])
+  @@index([isFree])
+  @@map("rituals")
+}
+
+model RitualStep {
+  id          String  @id @default(cuid())
+  ritualId    String
+  order       Int
+  title       String
+  titleHi     String?
+  description String?
+  descHi      String?
+
+  ritual Ritual @relation(fields: [ritualId], references: [id], onDelete: Cascade)
+
+  @@map("ritual_steps")
+}
+
+model Samagri {
+  id       String  @id @default(cuid())
+  ritualId String
+  name     String
+  nameHi   String?
+  quantity String?
+  optional Boolean @default(false)
+
+  ritual Ritual @relation(fields: [ritualId], references: [id], onDelete: Cascade)
+
+  @@map("samagri")
+}
+
+// Tracks which traditions a user has unlocked (premium access)
+model UserEntitlement {
+  id        String   @id @default(cuid())
+  userId    String
+  tradition String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tradition])
+  @@map("user_entitlements")
 }
