@@ -10,6 +10,7 @@ import '../features/auth/presentation/register_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/onboarding/presentation/onboarding_notifier.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
+import '../features/rituals/presentation/rituals_screen.dart';
 
 part 'router.g.dart';
 
@@ -75,6 +76,16 @@ class PhoneOtpRoute extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) =>
       const PhoneOtpScreen();
+}
+
+@TypedGoRoute<RitualsRoute>(path: '/rituals')
+@immutable
+class RitualsRoute extends GoRouteData {
+  const RitualsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const RitualsScreen();
 }
 
 // ---------------------------------------------------------------------------
