@@ -30,4 +30,9 @@ export const validationSchema = Joi.object({
 
   // CORS
   CORS_ORIGIN: Joi.string().default('http://localhost:3001'),
+
+  // Razorpay
+  RAZORPAY_KEY_ID: Joi.string().required(),
+  RAZORPAY_KEY_SECRET: Joi.string().required(),
+  RAZORPAY_WEBHOOK_SECRET: Joi.string().required(),
 });

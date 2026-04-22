@@ -16,7 +16,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
+  refreshTokens  RefreshToken[]
+  razorpayOrders RazorpayOrder[]
+  entitlements   Entitlement[]
 
   @@map("users")
 }
@@ -32,4 +34,73 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+enum OrderStatus {
+  CREATED
+  ATTEMPTED
+  PAID
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+// Razorpay order created before the client initiates payment
+model RazorpayOrder {
+  id           String      @id @default(cuid())
+  razorpayId   String      @unique // rzp_order_xxx returned by Razorpay
+  userId       String
+  amount       Int // amount in paise (INR × 100)
+  currency     String      @default("INR")
+  receipt      String      @unique // idempotency key we generate
+  status       OrderStatus @default(CREATED)
+  productId    String // e.g. "app_unlock", "credits_100"
+  productType  String // "one_time" | "consumable"
+  creditAmount Int? // non-null for consumable credit packs
+  notes        Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@map("razorpay_orders")
+}
+
+// Payment record created after Razorpay returns payment details to the client
+model Payment {
+  id                String        @id @default(cuid())
+  razorpayPaymentId String        @unique // pay_xxx
+  razorpayOrderId   String // matches RazorpayOrder.razorpayId
+  razorpaySignature String
+  status            PaymentStatus @default(PENDING)
+  verifiedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  order RazorpayOrder @relation(fields: [razorpayOrderId], references: [razorpayId])
+
+  @@map("payments")
+}
+
+// Tracks what a user has unlocked or how many consumable credits they hold
+model Entitlement {
+  id        String    @id @default(cuid())
+  userId    String
+  productId String // matches RazorpayOrder.productId
+  granted   Boolean   @default(true)
+  credits   Int? // cumulative balance for consumable products
+  expiresAt DateTime? // null = perpetual
+  paymentId String? // last payment that updated this record
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("entitlements")
 }
