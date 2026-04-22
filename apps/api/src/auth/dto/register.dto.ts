@@ -4,18 +4,17 @@ import {
   IsString,
   Matches,
   MinLength,
-  ValidateIf,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiPropertyOptional({ example: 'user@example.com' })
-  @ValidateIf((o: RegisterDto) => !o.phone)
+  @IsOptional()
   @IsEmail()
   email?: string;
 
   @ApiPropertyOptional({ example: '+919876543210' })
-  @ValidateIf((o: RegisterDto) => !o.email)
+  @IsOptional()
   @Matches(/^\+[1-9]\d{6,14}$/, {
     message: 'phone must be in E.164 format (e.g. +919876543210)',
   })
